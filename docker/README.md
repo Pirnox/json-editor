@@ -18,7 +18,28 @@ i zapakowaną do obrazu Dockera gotowego do uruchomienia w dowolnym miejscu.
 - **Wydajność** — kompresja gzip, długie cache'owanie zasobów statycznych
   (`css`/`js`), brak zbędnych zależności w obrazie (sam nginx + pliki app).
 
-## Budowanie i uruchamianie
+## Gotowy obraz (bez budowania)
+
+Obraz jest publikowany w GitHub Container Registry — można go od razu pobrać i uruchomić:
+
+```bash
+docker pull ghcr.io/pirnox/json-editor:latest
+
+docker run --rm -p 8080:8080 \
+  --read-only --tmpfs /tmp --tmpfs /var/cache/nginx --tmpfs /var/run \
+  --security-opt no-new-privileges --cap-drop ALL \
+  ghcr.io/pirnox/json-editor:latest
+```
+
+Dostępne tagi: `latest` oraz wersjonowane (np. `v1.0.0`).
+
+> Uwaga: pakiet w GHCR mógł zostać utworzony jako prywatny. Aby był dostępny
+> bez logowania, właściciel repo powinien ustawić go jako publiczny w
+> `github.com/Pirnox?tab=packages` → `json-editor` → *Package settings* →
+> *Change visibility* → *Public* (zmiana widoczności pakietu nie jest możliwa
+> przez token CLI, trzeba to zrobić ręcznie w ustawieniach na GitHubie).
+
+## Budowanie własnego obrazu lokalnie
 
 ```bash
 cd docker
