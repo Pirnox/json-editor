@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edytor JSON</title>
+<link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>🧩 Edytor JSON · YAML · TOML</h1>
+  <label class="format-picker">
+    Format wyjścia:
+    <select id="format-select" class="type-select">
+      <option value="json">JSON</option>
+      <option value="yaml">YAML</option>
+      <option value="toml">TOML</option>
+    </select>
+  </label>
+  <label class="file-btn">
+    📂 Wczytaj plik
+    <input type="file" id="file-input" accept=".json,.yaml,.yml,.toml,.txt,application/json" style="display:none">
+  </label>
+  <button id="btn-paste">📋 Wklej / wpisz dane</button>
+  <button id="btn-copy">📑 Kopiuj wynik</button>
+  <button id="btn-download">💾 Pobierz plik</button>
+  <button id="btn-clear" class="danger">🗑 Wyczyść</button>
+</header>
+
+<main>
+  <div class="panel" style="flex: 1.1;">
+    <div class="panel-header">Edytor (struktura) — dodawaj i usuwaj pola przyciskami, bez liczenia nawiasów</div>
+    <div class="panel-body" id="tree-root"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">Podgląd na żywo (zawsze poprawnie sformatowany)</div>
+    <div class="panel-body"><pre id="preview"></pre></div>
+  </div>
+</main>
+
+<div id="status">Gotowy. Zacznij od dodania pola lub wklej istniejący JSON.</div>
+
+<div class="modal-overlay" id="paste-modal">
+  <div class="modal" style="height: 480px;">
+    <h2>Wklej lub wpisz dane (JSON, YAML lub TOML)</h2>
+    <label class="format-picker">
+      Format wejścia:
+      <select id="input-format-select" class="type-select">
+        <option value="auto">Wykryj automatycznie</option>
+        <option value="json">JSON</option>
+        <option value="yaml">YAML</option>
+        <option value="toml">TOML</option>
+      </select>
+    </label>
+    <textarea id="raw-input" placeholder='np. {"przykład": [1, 2, 3]}  albo  klucz: wartość  albo  klucz = "wartość"'></textarea>
+    <div id="fix-suggestion">
+      <div>⚠️ Wykryto błędnie sformatowany JSON. Aplikacja wykryła i może automatycznie naprawić następujące problemy:</div>
+      <ul id="fix-list"></ul>
+      <button id="fix-apply" class="primary">🔧 Zastosuj poprawki i wczytaj</button>
+    </div>
+    <div class="modal-actions">
+      <button id="paste-cancel">Anuluj</button>
+      <button id="paste-load" class="primary">Wczytaj do edytora</button>
+    </div>
+  </div>
+</div>
+
+<script src="/assets/js/app.js"></script>
+</body>
+</html>
