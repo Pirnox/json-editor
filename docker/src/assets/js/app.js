@@ -99,24 +99,24 @@
     }
     if (format === 'toml') {
       if (!isPlainObject(js)) {
-        throw new Error('Format TOML wymaga, aby cały dokument był obiektem (mapą klucz → wartość), a nie listą ani pojedynczą wartością.');
+        throw new Error('TOML format requires the entire document to be an object (a key → value map), not a list or a single value.');
       }
       const lines = [];
       emitTomlTable(js, [], lines, false);
       const text = lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/\n*$/, '\n');
       const warnings = containsNull(js)
-        ? ['TOML nie obsługuje wartości null — zapisano je jako puste teksty "".']
+        ? ['TOML does not support null values — they were written as empty strings "".']
         : [];
       return { text, warnings };
     }
-    throw new Error('Nieznany format: ' + format);
+    throw new Error('Unknown format: ' + format);
   }
 
   function parseAs(text, format) {
     if (format === 'json') return JSON.parse(text);
     if (format === 'yaml') return parseYAML(text);
     if (format === 'toml') return parseTOML(text);
-    throw new Error('Nieznany format: ' + format);
+    throw new Error('Unknown format: ' + format);
   }
 
   // Guess which formats are most likely, in order of likelihood, so "auto"
@@ -204,7 +204,7 @@
       if (trimmedLine === '' || trimmedLine === '---' || trimmedLine === '...') continue;
       const leading = noComment.match(/^[ \t]*/)[0];
       if (leading.indexOf('\t') !== -1) {
-        throw new Error('YAML nie pozwala używać tabulatorów do wcięć (linia: "' + trimmedLine + '"). Zamień je na spacje.');
+        throw new Error('YAML does not allow tabs for indentation (line: "' + trimmedLine + '"). Replace them with spaces.');
       }
       lines.push({ indent: leading.length, content: noComment.slice(leading.length) });
     }
@@ -260,10 +260,10 @@
       const line = lines[cursor.i];
       if (line.indent < indent) break;
       if (line.indent !== indent) {
-        throw new Error('Niespójne wcięcie w YAML w linii: "' + line.content + '"');
+        throw new Error('Inconsistent indentation in YAML at line: "' + line.content + '"');
       }
       const kv = matchYamlKeyValue(line.content);
-      if (!kv) throw new Error('Nie rozpoznano wpisu mapy YAML w linii: "' + line.content + '"');
+      if (!kv) throw new Error('Could not parse YAML map entry at line: "' + line.content + '"');
       cursor.i++;
       if (kv.value === '' || kv.value === undefined) {
         if (cursor.i < lines.length && lines[cursor.i].indent > indent) {
@@ -286,7 +286,7 @@
     while (cursor.i < lines.length) {
       const line = lines[cursor.i];
       if (line.indent < indent) break;
-      if (line.indent !== indent) throw new Error('Niespójne wcięcie w liście YAML w linii: "' + line.content + '"');
+      if (line.indent !== indent) throw new Error('Inconsistent indentation in YAML list at line: "' + line.content + '"');
       if (!(line.content === '-' || line.content.startsWith('- '))) break;
       const rest = line.content === '-' ? '' : line.content.slice(2);
       cursor.i++;
@@ -432,7 +432,7 @@
         current = navigateTomlTable(root, path);
       } else {
         const eq = findUnquotedChar(line, '=');
-        if (eq === -1) throw new Error('Nie rozpoznano linii TOML (brak "="): "' + line + '"');
+        if (eq === -1) throw new Error('Could not parse TOML line (missing "="): "' + line + '"');
         const path = parseTomlKeyPath(line.slice(0, eq).trim());
         setTomlValue(current, path, parseTomlValue(line.slice(eq + 1).trim()));
       }
@@ -524,7 +524,7 @@
 
   function parseTomlValue(s) {
     s = s.trim();
-    if (s === '') throw new Error('Brak wartości po znaku "="');
+    if (s === '') throw new Error('Missing value after "="');
     if (s === 'true') return true;
     if (s === 'false') return false;
     if (s[0] === '[') return parseTomlArray(s);
@@ -558,7 +558,7 @@
     if (inner === '') return obj;
     for (const part of splitFlowItems(inner)) {
       const eq = findUnquotedChar(part, '=');
-      if (eq === -1) throw new Error('Nieprawidłowy wpis w tabeli inline TOML: "' + part + '"');
+      if (eq === -1) throw new Error('Invalid entry in inline TOML table: "' + part + '"');
       const path = parseTomlKeyPath(part.slice(0, eq).trim());
       setTomlValue(obj, path, parseTomlValue(part.slice(eq + 1).trim()));
     }
@@ -576,22 +576,22 @@
 
     if (fixed.charCodeAt(0) === 0xFEFF) {
       fixed = fixed.slice(1);
-      fixes.push('Usunięto niewidoczny znak BOM na początku pliku.');
+      fixes.push('Removed an invisible BOM character at the start of the file.');
     }
     let step = stripJsonComments(fixed);
-    if (step !== fixed) { fixed = step; fixes.push('Usunięto komentarze (// … lub /* … */) — JSON ich nie obsługuje.'); }
+    if (step !== fixed) { fixed = step; fixes.push('Removed comments (// … or /* … */) — JSON does not support them.'); }
 
     step = convertSingleToDoubleQuotes(fixed);
-    if (step !== fixed) { fixed = step; fixes.push('Zamieniono pojedyncze cudzysłowy (\') na podwójne (") wokół tekstów.'); }
+    if (step !== fixed) { fixed = step; fixes.push('Converted single quotes (\') to double quotes (") around strings.'); }
 
     step = quoteUnquotedKeys(fixed);
-    if (step !== fixed) { fixed = step; fixes.push('Dodano cudzysłowy wokół nazw kluczy zapisanych bez nich.'); }
+    if (step !== fixed) { fixed = step; fixes.push('Added quotes around unquoted key names.'); }
 
     step = fixed.replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/\bNone\b/g, 'null');
-    if (step !== fixed) { fixed = step; fixes.push('Zamieniono True/False/None (zapis pythonowy) na true/false/null.'); }
+    if (step !== fixed) { fixed = step; fixes.push('Converted True/False/None (Python style) to true/false/null.'); }
 
     step = fixed.replace(/,(\s*[}\]])/g, '$1');
-    if (step !== fixed) { fixed = step; fixes.push('Usunięto zbędne przecinki przed zamykającym } lub ].'); }
+    if (step !== fixed) { fixed = step; fixes.push('Removed trailing commas before closing } or ].'); }
 
     return { fixed, fixes };
   }
@@ -718,8 +718,8 @@
       const opt = document.createElement('option');
       opt.value = t;
       opt.textContent = {
-        object: 'obiekt {}', array: 'lista []', string: 'tekst',
-        number: 'liczba', boolean: 'prawda/fałsz', null: 'null'
+        object: 'object {}', array: 'array []', string: 'string',
+        number: 'number', boolean: 'boolean', null: 'null'
       }[t];
       if (t === node.type) opt.selected = true;
       typeSelect.appendChild(opt);
@@ -745,14 +745,14 @@
 
       if (node.type === 'object') {
         if (node.entries.length === 0) {
-          childContainer.appendChild(hint('Brak pól — kliknij "+ dodaj pole"'));
+          childContainer.appendChild(hint('No fields — click "+ add field"'));
         }
         node.entries.forEach((entry, idx) => {
           childContainer.appendChild(renderObjectEntry(node, entry, idx));
         });
         const addBtn = document.createElement('button');
         addBtn.className = 'icon-btn add';
-        addBtn.textContent = '+ dodaj pole';
+        addBtn.textContent = '+ add field';
         addBtn.addEventListener('click', () => {
           node.entries.push({ key: uniqueKey(node), value: { type: 'string', value: '' } });
           render();
@@ -760,14 +760,14 @@
         childContainer.appendChild(addBtn);
       } else {
         if (node.items.length === 0) {
-          childContainer.appendChild(hint('Lista pusta — kliknij "+ dodaj element"'));
+          childContainer.appendChild(hint('List is empty — click "+ add item"'));
         }
         node.items.forEach((item, idx) => {
           childContainer.appendChild(renderArrayItem(node, idx));
         });
         const addBtn = document.createElement('button');
         addBtn.className = 'icon-btn add';
-        addBtn.textContent = '+ dodaj element';
+        addBtn.textContent = '+ add item';
         addBtn.addEventListener('click', () => {
           node.items.push({ type: 'string', value: '' });
           render();
@@ -781,9 +781,9 @@
 
   function uniqueKey(objNode) {
     let i = objNode.entries.length + 1;
-    let k = 'pole' + i;
+    let k = 'field' + i;
     const existing = new Set(objNode.entries.map(e => e.key));
-    while (existing.has(k)) { i++; k = 'pole' + i; }
+    while (existing.has(k)) { i++; k = 'field' + i; }
     return k;
   }
 
@@ -801,7 +801,7 @@
       input.type = 'text';
       input.className = 'val-input string';
       input.value = node.value;
-      input.placeholder = 'wpisz tekst…';
+      input.placeholder = 'enter text…';
       input.addEventListener('input', () => { node.value = input.value; renderPreview(); });
       row.appendChild(input);
     } else if (node.type === 'number') {
@@ -818,7 +818,7 @@
     } else if (node.type === 'boolean') {
       const select = document.createElement('select');
       select.className = 'type-select';
-      [['true', 'prawda'], ['false', 'fałsz']].forEach(([v, label]) => {
+      [['true', 'true'], ['false', 'false']].forEach(([v, label]) => {
         const opt = document.createElement('option');
         opt.value = v;
         opt.textContent = label;
@@ -833,17 +833,17 @@
     } else if (node.type === 'null') {
       const span = document.createElement('span');
       span.className = 'null-label';
-      span.textContent = 'null (brak wartości)';
+      span.textContent = 'null (no value)';
       row.appendChild(span);
     } else if (node.type === 'object') {
       const span = document.createElement('span');
       span.className = 'badge';
-      span.textContent = node.entries.length + ' pól';
+      span.textContent = node.entries.length + ' fields';
       row.appendChild(span);
     } else if (node.type === 'array') {
       const span = document.createElement('span');
       span.className = 'badge';
-      span.textContent = node.items.length + ' elementów';
+      span.textContent = node.items.length + ' items';
       row.appendChild(span);
     }
   }
@@ -853,7 +853,7 @@
     keyInput.type = 'text';
     keyInput.className = 'key-input';
     keyInput.value = entry.key;
-    keyInput.placeholder = 'nazwa klucza';
+    keyInput.placeholder = 'key name';
     keyInput.addEventListener('input', () => { entry.key = keyInput.value; renderPreview(); });
 
     const labelWrap = document.createElement('span');
@@ -894,7 +894,7 @@
     const up = document.createElement('button');
     up.className = 'icon-btn';
     up.textContent = '↑';
-    up.title = 'Przesuń w górę';
+    up.title = 'Move up';
     up.disabled = idx === 0;
     up.addEventListener('click', () => {
       if (idx > 0) { [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]]; render(); }
@@ -903,7 +903,7 @@
     const down = document.createElement('button');
     down.className = 'icon-btn';
     down.textContent = '↓';
-    down.title = 'Przesuń w dół';
+    down.title = 'Move down';
     down.disabled = idx === list.length - 1;
     down.addEventListener('click', () => {
       if (idx < list.length - 1) { [list[idx + 1], list[idx]] = [list[idx], list[idx + 1]]; render(); }
@@ -912,7 +912,7 @@
     const remove = document.createElement('button');
     remove.className = 'icon-btn remove';
     remove.textContent = '🗑';
-    remove.title = 'Usuń';
+    remove.title = 'Remove';
     remove.addEventListener('click', () => {
       list.splice(idx, 1);
       render();
@@ -938,13 +938,13 @@
       }
       const label = FORMAT_INFO[outputFormat].label;
       if (warnings.length) {
-        setStatus(label + ' wygenerowany — ⚠️ ' + warnings.join(' '), 'warn');
+        setStatus(label + ' generated — ⚠️ ' + warnings.join(' '), 'warn');
       } else {
-        setStatus(label + ' jest poprawny — gotowy do skopiowania lub pobrania.', 'ok');
+        setStatus(label + ' is valid — ready to copy or download.', 'ok');
       }
     } catch (err) {
       preview.textContent = '';
-      setStatus('Nie można wygenerować ' + FORMAT_INFO[outputFormat].label + ': ' + err.message, 'error');
+      setStatus('Could not generate ' + FORMAT_INFO[outputFormat].label + ': ' + err.message, 'error');
     }
   }
 
@@ -972,7 +972,7 @@
   // ---- Toolbar actions ---------------------------------------------------
 
   document.getElementById('btn-clear').addEventListener('click', () => {
-    if (confirm('Wyczyścić cały dokument i zacząć od nowa?')) {
+    if (confirm('Clear the whole document and start over?')) {
       root = { type: 'object', entries: [] };
       render();
     }
@@ -988,9 +988,9 @@
     try {
       const { text } = stringifyAs(valueToJS(root), outputFormat);
       await navigator.clipboard.writeText(text);
-      setStatus('Skopiowano dane w formacie ' + FORMAT_INFO[outputFormat].label + ' do schowka.', 'ok');
+      setStatus('Copied data in ' + FORMAT_INFO[outputFormat].label + ' format to the clipboard.', 'ok');
     } catch (e) {
-      setStatus('Nie udało się skopiować: ' + e.message, 'error');
+      setStatus('Could not copy: ' + e.message, 'error');
     }
   });
 
@@ -1002,12 +1002,12 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'dane.' + info.ext;
+      a.download = 'data.' + info.ext;
       a.click();
       URL.revokeObjectURL(url);
-      setStatus('Plik dane.' + info.ext + ' został pobrany.', 'ok');
+      setStatus('File data.' + info.ext + ' was downloaded.', 'ok');
     } catch (e) {
-      setStatus('Nie udało się przygotować pliku: ' + e.message, 'error');
+      setStatus('Could not prepare the file: ' + e.message, 'error');
     }
   });
 
@@ -1083,16 +1083,16 @@
         render();
         hideFixSuggestion();
         const fmtLabel = FORMAT_INFO[fmt].label;
-        setStatus((requestedFormat === 'auto' ? 'Wykryto format ' + fmtLabel + '. ' : '') +
-          'Wczytano dane — możesz teraz wygodnie edytować pola.', 'ok');
+        setStatus((requestedFormat === 'auto' ? 'Detected format ' + fmtLabel + '. ' : '') +
+          'Data loaded — you can now edit the fields.', 'ok');
         return true;
       } catch (err) {
         lastError = { fmt, err };
       }
     }
     const primaryFmt = order[0];
-    setStatus('Nie udało się wczytać jako ' + FORMAT_INFO[primaryFmt].label + ': ' + lastError.err.message +
-      '. Sprawdź składnię albo wybierz inny format wejścia.', 'error');
+    setStatus('Could not load as ' + FORMAT_INFO[primaryFmt].label + ': ' + lastError.err.message +
+      '. Check the syntax or choose a different input format.', 'error');
     if (primaryFmt === 'json') {
       offerJSONAutoFix(text);
     } else {
@@ -1105,12 +1105,12 @@
   root = {
     type: 'object',
     entries: [
-      { key: 'imię', value: { type: 'string', value: 'Jan' } },
-      { key: 'wiek', value: { type: 'number', value: 30 } },
-      { key: 'aktywny', value: { type: 'boolean', value: true } },
-      { key: 'tagi', value: { type: 'array', items: [
-        { type: 'string', value: 'pierwszy' },
-        { type: 'string', value: 'drugi' }
+      { key: 'name', value: { type: 'string', value: 'John' } },
+      { key: 'age', value: { type: 'number', value: 30 } },
+      { key: 'active', value: { type: 'boolean', value: true } },
+      { key: 'tags', value: { type: 'array', items: [
+        { type: 'string', value: 'first' },
+        { type: 'string', value: 'second' }
       ] } }
     ]
   };

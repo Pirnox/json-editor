@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Edytor JSON</title>
+<title>JSON Editor</title>
 <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 
 <header>
-  <h1>🧩 Edytor JSON · YAML · TOML</h1>
+  <h1>🧩 JSON · YAML · TOML Editor</h1>
   <label class="format-picker">
-    Format wyjścia:
+    Output format:
     <select id="format-select" class="type-select">
       <option value="json">JSON</option>
       <option value="yaml">YAML</option>
@@ -19,49 +19,49 @@
     </select>
   </label>
   <label class="file-btn">
-    📂 Wczytaj plik
+    📂 Load file
     <input type="file" id="file-input" accept=".json,.yaml,.yml,.toml,.txt,application/json" style="display:none">
   </label>
-  <button id="btn-paste">📋 Wklej / wpisz dane</button>
-  <button id="btn-copy">📑 Kopiuj wynik</button>
-  <button id="btn-download">💾 Pobierz plik</button>
-  <button id="btn-clear" class="danger">🗑 Wyczyść</button>
+  <button id="btn-paste">📋 Paste / type data</button>
+  <button id="btn-copy">📑 Copy result</button>
+  <button id="btn-download">💾 Download file</button>
+  <button id="btn-clear" class="danger">🗑 Clear</button>
 </header>
 
 <main>
   <div class="panel" style="flex: 1.1;">
-    <div class="panel-header">Edytor (struktura) — dodawaj i usuwaj pola przyciskami, bez liczenia nawiasów</div>
+    <div class="panel-header">Editor (structure) — add and remove fields with buttons, no need to count brackets</div>
     <div class="panel-body" id="tree-root"></div>
   </div>
   <div class="panel">
-    <div class="panel-header">Podgląd na żywo (zawsze poprawnie sformatowany)</div>
+    <div class="panel-header">Live preview (always correctly formatted)</div>
     <div class="panel-body"><pre id="preview"></pre></div>
   </div>
 </main>
 
-<div id="status">Gotowy. Zacznij od dodania pola lub wklej istniejący JSON.</div>
+<div id="status">Ready. Start by adding a field or paste existing JSON.</div>
 
 <div class="modal-overlay" id="paste-modal">
   <div class="modal" style="height: 480px;">
-    <h2>Wklej lub wpisz dane (JSON, YAML lub TOML)</h2>
+    <h2>Paste or type data (JSON, YAML or TOML)</h2>
     <label class="format-picker">
-      Format wejścia:
+      Input format:
       <select id="input-format-select" class="type-select">
-        <option value="auto">Wykryj automatycznie</option>
+        <option value="auto">Detect automatically</option>
         <option value="json">JSON</option>
         <option value="yaml">YAML</option>
         <option value="toml">TOML</option>
       </select>
     </label>
-    <textarea id="raw-input" placeholder='np. {"przykład": [1, 2, 3]}  albo  klucz: wartość  albo  klucz = "wartość"'></textarea>
+    <textarea id="raw-input" placeholder='e.g. {"example": [1, 2, 3]}  or  key: value  or  key = "value"'></textarea>
     <div id="fix-suggestion">
-      <div>⚠️ Wykryto błędnie sformatowany JSON. Aplikacja wykryła i może automatycznie naprawić następujące problemy:</div>
+      <div>⚠️ Malformed JSON detected. The app found the following issues and can fix them automatically:</div>
       <ul id="fix-list"></ul>
-      <button id="fix-apply" class="primary">🔧 Zastosuj poprawki i wczytaj</button>
+      <button id="fix-apply" class="primary">🔧 Apply fixes and load</button>
     </div>
     <div class="modal-actions">
-      <button id="paste-cancel">Anuluj</button>
-      <button id="paste-load" class="primary">Wczytaj do edytora</button>
+      <button id="paste-cancel">Cancel</button>
+      <button id="paste-load" class="primary">Load into editor</button>
     </div>
   </div>
 </div>

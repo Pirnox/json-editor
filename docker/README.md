@@ -1,26 +1,26 @@
-# Edytor JSON / YAML / TOML — wersja kontenerowa
+# JSON / YAML / TOML Editor — containerized version
 
-Ten katalog zawiera tę samą aplikację co `../json_editor.html`, ale podzieloną
-na osobne pliki (`index.html`, `assets/css/style.css`, `assets/js/app.js`)
-i zapakowaną do obrazu Dockera gotowego do uruchomienia w dowolnym miejscu.
+This directory contains the same app as `../json_editor.html`, but split
+into separate files (`index.html`, `assets/css/style.css`, `assets/js/app.js`)
+and packaged into a Docker image ready to run anywhere.
 
-## Najważniejsze właściwości
+## Key properties
 
-- **100% po stronie przeglądarki** — serwer (nginx) jedynie serwuje statyczne
-  pliki. Nic, co użytkownik wklei, wczyta lub edytuje, nigdy nie trafia na
-  serwer ani nie jest zapisywane.
-- **Brak logów** — `access_log off` w konfiguracji nginx: serwer nie zapisuje
-  nawet adresów IP, ścieżek czy nagłówków żądań. Wszystko pozostaje anonimowe.
-- **Obraz bez roota** — bazuje na `nginxinc/nginx-unprivileged`, działa jako
-  zwykły użytkownik na porcie 8080.
-- **Twarde nagłówki bezpieczeństwa** — CSP, `X-Content-Type-Options`,
-  `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` i inne.
-- **Wydajność** — kompresja gzip, długie cache'owanie zasobów statycznych
-  (`css`/`js`), brak zbędnych zależności w obrazie (sam nginx + pliki app).
+- **100% client-side** — the server (nginx) only serves static files.
+  Nothing the user pastes, loads or edits ever reaches the server or gets
+  saved anywhere.
+- **No logging** — `access_log off` in the nginx config: the server doesn't
+  record even IP addresses, paths or request headers. Everything stays anonymous.
+- **Rootless image** — based on `nginxinc/nginx-unprivileged`, runs as a
+  regular user on port 8080.
+- **Hardened security headers** — CSP, `X-Content-Type-Options`,
+  `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and more.
+- **Performance** — gzip compression, long-lived caching for static assets
+  (`css`/`js`), no unnecessary dependencies in the image (just nginx + app files).
 
-## Gotowy obraz (bez budowania)
+## Pre-built image (no build needed)
 
-Obraz jest publikowany w GitHub Container Registry — można go od razu pobrać i uruchomić:
+The image is published on GitHub Container Registry — you can pull and run it directly:
 
 ```bash
 docker pull ghcr.io/pirnox/json-editor:latest
@@ -31,21 +31,21 @@ docker run --rm -p 8080:8080 \
   ghcr.io/pirnox/json-editor:latest
 ```
 
-Dostępne tagi: `latest` oraz wersjonowane (np. `v1.0.0`).
+Available tags: `latest` and versioned releases (e.g. `v1.0.0`).
 
-> Uwaga: pakiet w GHCR mógł zostać utworzony jako prywatny. Aby był dostępny
-> bez logowania, właściciel repo powinien ustawić go jako publiczny w
+> Note: the GHCR package may have been created as private. To make it
+> available without logging in, the repo owner should set it to public at
 > `github.com/Pirnox?tab=packages` → `json-editor` → *Package settings* →
-> *Change visibility* → *Public* (zmiana widoczności pakietu nie jest możliwa
-> przez token CLI, trzeba to zrobić ręcznie w ustawieniach na GitHubie).
+> *Change visibility* → *Public* (changing package visibility isn't possible
+> via the CLI token — it has to be done manually in GitHub's settings).
 
-## Budowanie własnego obrazu lokalnie
+## Building your own image locally
 
 ```bash
 cd docker
 docker build -t json-editor:latest .
 
-# Najbardziej restrykcyjnie: tylko-do-odczytu system plików, bez nowych uprawnień
+# Most restrictive: read-only filesystem, no new privileges
 docker run --rm -p 8080:8080 \
   --read-only \
   --tmpfs /tmp \
@@ -56,9 +56,9 @@ docker run --rm -p 8080:8080 \
   json-editor:latest
 ```
 
-Aplikacja będzie dostępna pod `http://localhost:8080`.
+The app will be available at `http://localhost:8080`.
 
-## docker-compose (opcjonalnie)
+## docker-compose (optional)
 
 ```yaml
 services:
@@ -79,7 +79,7 @@ services:
     restart: unless-stopped
 ```
 
-## Kontrola stanu
+## Health check
 
-Obraz udostępnia endpoint `/healthz` (zwraca `200 ok`) używany przez
-wbudowany `HEALTHCHECK`.
+The image exposes a `/healthz` endpoint (returns `200 ok`) used by the
+built-in `HEALTHCHECK`.
