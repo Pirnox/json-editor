@@ -690,6 +690,16 @@
     return out;
   }
 
+  // ---- Input escape helpers ---------------------------------------------
+
+  function encodeForInput(s) {
+    return s.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+  }
+
+  function decodeFromInput(s) {
+    return s.replace(/\\(n|t|r|\\)/g, (_, c) => ({ n: '\n', t: '\t', r: '\r', '\\': '\\' }[c]));
+  }
+
   // ---- Rendering: tree editor -------------------------------------------
 
   function render() {
@@ -800,9 +810,9 @@
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'val-input string';
-      input.value = node.value;
-      input.placeholder = 'enter text…';
-      input.addEventListener('input', () => { node.value = input.value; renderPreview(); });
+      input.value = encodeForInput(node.value);
+      input.placeholder = 'enter text… (\\n = newline, \\t = tab, \\\\ = backslash)';
+      input.addEventListener('input', () => { node.value = decodeFromInput(input.value); renderPreview(); });
       row.appendChild(input);
     } else if (node.type === 'number') {
       const input = document.createElement('input');
@@ -852,9 +862,9 @@
     const keyInput = document.createElement('input');
     keyInput.type = 'text';
     keyInput.className = 'key-input';
-    keyInput.value = entry.key;
+    keyInput.value = encodeForInput(entry.key);
     keyInput.placeholder = 'key name';
-    keyInput.addEventListener('input', () => { entry.key = keyInput.value; renderPreview(); });
+    keyInput.addEventListener('input', () => { entry.key = decodeFromInput(keyInput.value); renderPreview(); });
 
     const labelWrap = document.createElement('span');
     labelWrap.style.display = 'flex';
@@ -950,7 +960,7 @@
 
   function highlight(jsonText) {
     return jsonText.replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|[{}\[\],])/g,
       (match) => {
         let cls = 'tok-number';
         if (/^"/.test(match)) {
@@ -959,10 +969,12 @@
           cls = 'tok-bool';
         } else if (/null/.test(match)) {
           cls = 'tok-null';
+        } else if (/^[{}\[\],]$/.test(match)) {
+          cls = 'tok-punct';
         }
         return '<span class="' + cls + '">' + escapeHtml(match) + '</span>';
       }
-    ).replace(/([{}\[\],])/g, '<span class="tok-punct">$1</span>');
+    );
   }
 
   function escapeHtml(s) {
